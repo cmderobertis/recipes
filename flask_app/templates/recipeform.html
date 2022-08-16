@@ -1,0 +1,70 @@
+{% extends 'base.html' %} {% block title %} {{page_title}} {% endblock title
+%}{% block content %}
+<div class="container mt-3">
+  <div class="card">
+    <div class="card-header text-center">
+      <h2>{{page_title}}</h2>
+    </div>
+    <div class="card-body">
+      <form class="form" action="/{{action}}/recipe" method="post">
+        <div class="row">
+          <div class="col-8">
+            <div class="mb-3">
+              <input type="hidden" name="user_id" value="{{session.user_id}}" />
+              {% if action == 'update' %}
+              <input type="hidden" name="id" value="{{recipe.id}}" />
+              {% endif %}
+              <label class="form-label" for="name">Name</label>
+              <input class="form-control" type="text" name="name"
+              placeholder="Name" {% if action == 'update' %}
+              value="{{recipe.name}}" {% endif %} required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="description">Description</label>
+              <input class="form-control" type="textarea" name="description"
+              placeholder="Description" {% if action == 'update' %}
+              value="{{recipe.description}}" {% endif %} rows="4" cols="50"
+              required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="instructions">Instructions</label>
+              <input class="form-control" type="textarea" name="instructions"
+              placeholder="Instructions" {% if action == 'update' %}
+              value="{{recipe.instructions}}" {% endif %} rows="4" cols="50"
+              required />
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="mb-3">
+              <label class="form-label" for="date_made">Date Made</label>
+              <input class="form-control" type="date" name="date_made" {% if
+              action == 'update' %} value="{{recipe.date_made}}" {% endif %}
+              required />
+            </div>
+            <p class="mb-1">Under 30 Minutes?</p>
+            <div class="form-check form-check-inline">
+              <label class="form-check-label" for="under_30">Yes</label>
+              <input class="form-check-input" type="radio" name="under_30" {% if
+              action == 'update' and recipe.under_30 %} checked {% endif %}
+              id="yes" value="1" required />
+            </div>
+            <div class="form-check form-check-inline">
+              <label class="form-check-label" for="under_30">No</label>
+              <input class="form-check-input" type="radio" name="under_30" {% if
+              action == 'update' and not recipe.under_30 %} checked {% endif %}
+              id="no" value="0" required />
+            </div>
+            <div class="form-group">
+              <input
+                class="btn btn-primary"
+                type="submit"
+                value="Submit Recipe"
+              />
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock content %}
