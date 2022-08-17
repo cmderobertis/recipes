@@ -30,10 +30,10 @@
               <a
                 class="text-success text-decoration-none"
                 href="/recipe/{{recipe.id}}"
-                >View Recipe</a
+                >View</a
               >
               {% if recipe.user_id == session.user_id %}
-              <a href="/edit/{{recipe.id}}"
+              <a href="/edit/recipe/{{recipe.id}}"
                 ><i class="ms-3 fa-solid fa-pencil"></i
               ></a>
               <a href="/delete/{{recipe.id}}"

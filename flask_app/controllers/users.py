@@ -1,4 +1,6 @@
+from pydoc import pager
 from flask_app import app, render_template, request, redirect, bcrypt, session, flash
+from ..models.favorite import Favorite
 from flask_app.models.user import User
 from flask_app.models.recipe import Recipe
 
@@ -63,21 +65,33 @@ def dashboard():
 
 @ app.route('/user/recipes')
 def user_recipes():
+    if 'user_id' not in session:
+        print('User is not in session')
+        return redirect('/')
+    recipes = Recipe.get_all()
     user = User.get_user_with_recipes({'id': session['user_id']})
-    return render_template('userrecipes.html', user=user)
+    non_faves = Favorite.get_all_non_faves({'id': session['user_id']})
+    print(non_faves)
+    return render_template('userrecipes.html', user=user, recipes=recipes, non_faves=non_faves, page_title='Favorites')
+
+
+@app.route('/edit/user')
+def edit_user():
+    user = User.get_one({'id': session['user_id']})
+    return render_template('edituser.html', user=user)
 
 
 @ app.route('/update/user', methods=['POST'])
 def update_user():
+    if not User.validate_user(request.form):
+        return redirect('/edit/user')
     User.update(request.form)
-    return redirect(f"/user/{request.form['id']}")
+    return redirect("/dashboard")
 
 
-@ app.route('/deactivate/<int:id>')
-def deactivate(id):
-    # Don't delete from db. Make user inactive.
-    # User.delete({'id': id})
-    return redirect('/')
+# @ app.route('/deactivate/<int:id>')
+# def deactivate(id):
+#     return redirect('/')
 
 # @app.route("/users")
 # def show_users():

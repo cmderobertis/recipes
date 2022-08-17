@@ -1,6 +1,6 @@
 from flask_app.config.mysqlconnection import connectToMySQL
 from flask_app.models import recipe
-from flask_app import flash
+from flask_app import flash, session
 import re
 
 
@@ -42,7 +42,7 @@ class User:
 
     @classmethod
     def update(cls, data):
-        query = "UPDATE users SET name = %(name)s WHERE id = %(id)s;"
+        query = "UPDATE users SET first_name = %(first_name)s, last_name = %(last_name)s, email = %(email)s WHERE id = %(id)s;"
         return connectToMySQL(DATABASE).query_db(query, data)
 
     @classmethod
@@ -60,23 +60,57 @@ class User:
         return cls(result[0])
 
     @classmethod
+    # note, if you need to get user with recipes directly associated with them, copy this and change the query to connect users directly to recipes
     def get_user_with_recipes(cls, data):
         query = "SELECT * FROM users LEFT JOIN favorites ON favorites.user_id = users.id LEFT JOIN recipes ON favorites.recipe_id = recipes.id WHERE users.id = %(id)s;"
         results = connectToMySQL(DATABASE).query_db(query, data)
         # results will be a list of user objects with the recipe attached to each row.
         user = cls(results[0])
-        print(user)
+        # print(user)
         for row_from_db in results:
-            # Now we parse the user data to make instances of users ="keyword from-rainbow">and add them into our list.
+            # Now we parse the user data to make instances of users and add them into our list.
             recipe_data = {
                 "id": row_from_db["recipes.id"],
+                'user_id': row_from_db["recipes.user_id"],
                 "name": row_from_db["name"],
-                "num_pages": row_from_db["num_pages"],
+                "description": row_from_db["description"],
+                'instructions': row_from_db["instructions"],
+                'date_made': row_from_db["date_made"],
+                'under_30': row_from_db["under_30"],
                 "created_at": row_from_db["recipes.created_at"],
                 "updated_at": row_from_db["recipes.updated_at"]
             }
-            user.recipes.append(recipe.Recipe(recipe_data))
+            # Only append to recipes list if the recipe exists.
+            print(row_from_db)
+            if row_from_db['name']:
+                user.recipes.append(recipe.Recipe(recipe_data))
         return user
+
+    # @classmethod
+    # def get_user_without_recipes(cls, data):
+    #     query = "SELECT * FROM users LEFT JOIN favorites ON favorites.user_id = users.id LEFT JOIN recipes ON favorites.recipe_id != recipes.id WHERE users.id = %(id)s;"
+    #     results = connectToMySQL(DATABASE).query_db(query, data)
+    #     # results will be a list of user objects with the recipe attached to each row.
+    #     user = cls(results[0])
+    #     # print(user)
+    #     for row_from_db in results:
+    #         # Now we parse the user data to make instances of users and add them into our list.
+    #         recipe_data = {
+    #             "id": row_from_db["recipes.id"],
+    #             'user_id': row_from_db["recipes.user_id"],
+    #             "name": row_from_db["name"],
+    #             "description": row_from_db["description"],
+    #             'instructions': row_from_db["instructions"],
+    #             'date_made': row_from_db["date_made"],
+    #             'under_30': row_from_db["under_30"],
+    #             "created_at": row_from_db["recipes.created_at"],
+    #             "updated_at": row_from_db["recipes.updated_at"]
+    #         }
+    #         # Only append to recipes list if the recipe exists.
+    #         print(row_from_db)
+    #         if row_from_db['name']:
+    #             user.recipes.append(recipe.Recipe(recipe_data))
+    #     return user
 
     @classmethod
     def get_users_and_recipes(cls, data):
@@ -86,21 +120,18 @@ class User:
         user = cls(results[0])
         print(user)
         for row_from_db in results:
-            # Now we parse the user data to make instances of users ="keyword from-rainbow">and add them into our list.
+            # Now we parse the user data to make instances of users and add them into our list.
             recipe_data = {
                 "id": row_from_db["recipes.id"],
                 "name": row_from_db["name"],
-                "num_pages": row_from_db["num_pages"],
+                "description": row_from_db["description"],
+                'instructions': row_from_db["instructions"],
+                'date_made': row_from_db["date_made"],
+                'under_30': row_from_db["under_30"],
                 "created_at": row_from_db["recipes.created_at"],
                 "updated_at": row_from_db["recipes.updated_at"]
             }
-            user.recipes.append(recipe.Recipe(recipe_data))
         return user
-
-    @classmethod
-    # need to pass in dictionary with user_id and recipe_id
-    def favorite_recipe(cls, data):
-        query = "INSERT INTO favorites (user_id, recipe_id) VALUES (%(user_id)s, %(recipe_id)s);"
 
     @staticmethod
     def validate_user(form: dict) -> bool:
@@ -120,15 +151,17 @@ class User:
         if not EMAIL_REGEX.match(form['email']):
             is_valid = False
             flash('Invalid email address.', 'email')
-        data = {'email': form['email']}
-        user_in_db = User.get_by_email(data)
-        if user_in_db:
-            is_valid = False
-            flash('Email is already in use. Try using it to log in.', 'email')
-        if form['password'] != form['password_confirmation']:
-            is_valid = False
-            flash('Passwords must match.', 'password')
-        if len(form['password']) < 8:
-            is_valid = False
-            flash('Password must be at least 8 characters.', 'password')
+        if not 'user_id' in session:
+            data = {'email': form['email']}
+            user_in_db = User.get_by_email(data)
+            if user_in_db:
+                is_valid = False
+                flash('Email is already in use. Try using it to log in.', 'email')
+        if 'password' in form:
+            if form['password'] != form['password_confirmation']:
+                is_valid = False
+                flash('Passwords must match.', 'password')
+            if len(form['password']) < 8:
+                is_valid = False
+                flash('Password must be at least 8 characters.', 'password')
         return is_valid

@@ -1,5 +1,6 @@
 from flask_app.config.mysqlconnection import connectToMySQL
 from flask_app.models import user
+from flask_app import flash
 
 DATABASE = 'recipes'
 
@@ -16,6 +17,7 @@ class Recipe:
         self.user_id = data['user_id']
         self.created_at = data['created_at']
         self.updated_at = data['updated_at']
+        self.users = []
         if 'first_name' in data:
             self.first_name = data['first_name']
         if 'last_name' in data:
@@ -29,6 +31,20 @@ class Recipe:
     #     for recipe in results:
     #         recipes.append(Recipe(recipe))
     #     return recipes
+
+    @staticmethod
+    def validate_recipe(form: dict) -> bool:
+        is_valid = True
+        if len(form['name']) < 3:
+            is_valid = False
+            flash('Name must be at least 3 characters.')
+        if len(form['description']) < 3:
+            is_valid = False
+            flash('Description must be at least 3 characters.')
+        if len(form['instructions']) < 3:
+            is_valid = False
+            flash('Instructions must be at least 3 characters.')
+        return is_valid
 
     @classmethod
     def save(cls, data):
@@ -57,9 +73,7 @@ class Recipe:
         query = "SELECT * FROM recipes JOIN users ON recipes.user_id = users.id;"
         results = connectToMySQL(DATABASE).query_db(query)
         recipes = []
-        # print(results[0])
         for result in results:
-            # print(result['first_name'])
             data = {
                 'id': result['id'],
                 'name': result['name'],
@@ -74,7 +88,6 @@ class Recipe:
                 'last_name': result['last_name'],
             }
             recipe = cls(data)
-            # print(recipe.user_name)
             recipes.append(recipe)
         return recipes
 
@@ -88,11 +101,13 @@ class Recipe:
             # Now we parse the recipe data to make instances of recipes ="keyword from-rainbow">and add them into our list.
             user_data = {
                 "id": row_from_db["users.id"],
-                "name": row_from_db["name"],
-                "bun": row_from_db["bun"],
-                "calories": row_from_db["calories"],
-                "created_at": row_from_db["recipes.created_at"],
-                "updated_at": row_from_db["recipes.updated_at"]
+                "first_name": row_from_db["first_name"],
+                "last_name": row_from_db["last_name"],
+                "email": row_from_db["email"],
+                "password": row_from_db["password"],
+                "created_at": row_from_db["users.created_at"],
+                "updated_at": row_from_db["users.updated_at"]
             }
-            recipe.on_users.append(user.User(user_data))
+            if row_from_db['first_name']:
+                recipe.users.append(user.User(user_data))
         return recipe

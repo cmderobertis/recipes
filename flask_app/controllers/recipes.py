@@ -1,6 +1,7 @@
 from flask_app import app, render_template, request, redirect, session
 from flask_app.models.recipe import Recipe
 from flask_app.models.user import User
+from flask_app.models.favorite import Favorite
 
 
 @app.route('/recipes')
@@ -16,17 +17,19 @@ def new_recipe():
 
 @app.route('/post/recipe', methods=['POST'])
 def post_recipe():
+    if not Recipe.validate_recipe(request.form):
+        return redirect('/new/recipe')
     recipe_id = Recipe.save(request.form)
     return redirect(f'/recipe/{recipe_id}')
 
 
 @app.route('/recipe/<int:id>')
 def show_recipe(id):
-    recipe = Recipe.get_one({'id': id})
-    return render_template('recipe.html', recipe=recipe, page_title=recipe.name)
+    recipe = Recipe.get_recipe_with_users({'id': id})
+    return render_template('recipe.html', recipe=recipe, page_title=recipe.name, users=recipe.users)
 
 
-@app.route('/edit/<int:id>')
+@app.route('/edit/recipe/<int:id>')
 def edit_recipe(id):
     recipe = Recipe.get_one({'id': id})
     if not recipe.user_id == session['user_id']:
@@ -36,6 +39,8 @@ def edit_recipe(id):
 
 @app.route('/update/recipe', methods=['POST'])
 def update_recipe():
+    if not Recipe.validate_recipe(request.form):
+        return redirect(f"/edit/{request.form['id']}")
     Recipe.update(request.form)
     return redirect(f"/recipe/{request.form['id']}")
 
@@ -44,6 +49,13 @@ def update_recipe():
 def delete_recipe(id):
     Recipe.delete({'id': id})
     return redirect('/')
+
+
+@app.route('/favorite', methods=['POST'])
+def favorite():
+    Favorite.save(
+        {'user_id': session['user_id'], 'recipe_id': request.form['recipe']})
+    return redirect('/user/recipes')
 
 # @app.route('/recipes/<int:id>')
 # def show_recipe(id):

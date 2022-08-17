@@ -21,17 +21,31 @@
             </div>
             <div class="mb-3">
               <label class="form-label" for="description">Description</label>
-              <input class="form-control" type="textarea" name="description"
-              placeholder="Description" {% if action == 'update' %}
-              value="{{recipe.description}}" {% endif %} rows="4" cols="50"
-              required />
+              <textarea
+                class="form-control"
+                name="description"
+                placeholder="Description"
+                rows="4"
+                cols="50"
+                required
+              >
+{% if action == 'update' %}
+              {{recipe.description}} {% endif %}</textarea
+              >
             </div>
             <div class="mb-3">
               <label class="form-label" for="instructions">Instructions</label>
-              <input class="form-control" type="textarea" name="instructions"
-              placeholder="Instructions" {% if action == 'update' %}
-              value="{{recipe.instructions}}" {% endif %} rows="4" cols="50"
-              required />
+              <textarea
+                class="form-control"
+                name="instructions"
+                placeholder="Instructions"
+                rows="4"
+                cols="50"
+                required
+              >
+{% if action == 'update' %}
+              {{recipe.instructions}} {% endif %}</textarea
+              >
             </div>
           </div>
           <div class="col-4">
